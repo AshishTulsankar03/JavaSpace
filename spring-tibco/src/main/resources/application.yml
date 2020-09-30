@@ -1,2 +1,8 @@
-tibco.topicName: demo.topic
-tibco.queueName: demo.queue
+spring:
+  jms:
+    jndi-name: tcp://localhost:7222
+  jta:
+    bitronix:
+      connectionfactory:
+        user: admin
+        password: admin

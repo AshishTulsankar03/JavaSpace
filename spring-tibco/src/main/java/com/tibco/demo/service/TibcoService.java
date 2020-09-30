@@ -4,11 +4,10 @@
 package com.tibco.demo.service;
 
 import javax.jms.MessageProducer;
-import javax.jms.Queue;
-import javax.jms.Session;
-import javax.jms.Topic;
 
 import org.springframework.jms.core.JmsMessagingTemplate;
+
+import com.tibco.demo.views.Student;
 
 /**
  * @author Ashish Tulsankar
@@ -17,15 +16,14 @@ import org.springframework.jms.core.JmsMessagingTemplate;
 public interface TibcoService {
 	
 	/**
-	 * Method gets the underlying {@link Session}, builds the {@link Topic} or {@link Queue} & sends the
-	 * received message using {@link MessageProducer}
-	 * @param msgData
+	 * Send message using {@link MessageProducer}
+	 * @param student as message to send over destination
 	 */
-	public void sendMessage(String msgData);
+	public void sendMessage(Student student);
 	
 	/**
-	 * Method to send message using {@link JmsMessagingTemplate}
-	 * @param payload as Message content
+	 * Send message using {@link JmsMessagingTemplate}
+	 * @param student as Message content
 	 */
-	public void sendViaMsgTemplate(String payload);
+	public void sendViaMsgTemplate(Student student);
 }

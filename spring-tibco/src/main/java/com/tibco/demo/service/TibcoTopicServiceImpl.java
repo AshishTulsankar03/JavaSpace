@@ -15,13 +15,16 @@ import javax.jms.Topic;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import com.tibco.demo.TibcoConstants;
+import com.tibco.demo.views.Student;
 
 
 
 /**
+ * Include methods to send messages over {@link Topic}
  * @author Ashish Tulsankar
  * 14-Sep-2020
  */
@@ -33,7 +36,6 @@ public class TibcoTopicServiceImpl implements TibcoService{
 
 	private ConnectionFactory connectionFactory;
 	private JmsMessagingTemplate jmsMessagingTemplate;
-	private String topicName;
 
 	private MessageProducer messageProducer;
 	private Connection connection;
@@ -41,12 +43,10 @@ public class TibcoTopicServiceImpl implements TibcoService{
 
 	@Autowired
 	public TibcoTopicServiceImpl(ConnectionFactory connectionFactory,
-			JmsMessagingTemplate messagingTemplate,
-			@Value("${tibco.topicName}") String topic) {
+			JmsMessagingTemplate messagingTemplate) {
 
 		this.connectionFactory=connectionFactory;
 		this.jmsMessagingTemplate=messagingTemplate;
-		this.topicName=topic;
 	}
 
 	/**
@@ -61,13 +61,14 @@ public class TibcoTopicServiceImpl implements TibcoService{
 
 		try {
 
-			// Initialize messageProducer with Topic as destination 
+			logger.info("Topic Init");
+			// #1 Initialize messageProducer with Topic as destination 
 			connection  = connectionFactory.createConnection();
 			session     = connection.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
-			Topic topic = session.createTopic(topicName);
+			Topic topic = session.createTopic(TibcoConstants.INCOMING_TOPIC);
 			messageProducer = session.createProducer(topic);
 
-			// Initialize messagingTemplate with Topic as destination 
+			// #2 Initialize messagingTemplate with Topic as destination 
 			jmsMessagingTemplate.setDefaultDestination(topic);
 
 			connection.start();
@@ -80,12 +81,13 @@ public class TibcoTopicServiceImpl implements TibcoService{
 
 
 	@Override
-	public void sendMessage(String msgData) {
+	public void sendMessage(Student student) {
 		try {
-			logger.info("sendUsingTopic");
 
-			Message message= session.createTextMessage(msgData);
+			// Send Text Message
+			Message message= session.createTextMessage(student.toString());
 			messageProducer.send(message);
+
 
 		} catch (JMSException e) {
 			logger.error("Exception occurred {}", e);
@@ -94,11 +96,9 @@ public class TibcoTopicServiceImpl implements TibcoService{
 	}
 
 
-	public void sendViaMsgTemplate(String payload) {
-		
-		jmsMessagingTemplate.convertAndSend(payload);
+	public void sendViaMsgTemplate(Student student) {
 
-
+		jmsMessagingTemplate.convertAndSend(student.toString());
 
 	}
 

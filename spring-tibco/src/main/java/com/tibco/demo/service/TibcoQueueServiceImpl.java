@@ -11,17 +11,21 @@ import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
+import javax.jms.Topic;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import com.tibco.demo.TibcoConstants;
+import com.tibco.demo.views.Student;
 
 
 
 /**
+ * Include methods to send messages over {@link Topic}
  * @author Ashish Tulsankar
  * 14-Sep-2020
  */
@@ -32,7 +36,6 @@ public class TibcoQueueServiceImpl implements TibcoService{
 
 	private ConnectionFactory connectionFactory;
 	private JmsMessagingTemplate jmsMessagingTemplate;
-	private String queueName;
 
 	private MessageProducer messageProducer;
 	private Connection connection;
@@ -40,11 +43,9 @@ public class TibcoQueueServiceImpl implements TibcoService{
 
 	@Autowired
 	public TibcoQueueServiceImpl(ConnectionFactory factory,
-			JmsMessagingTemplate messagingTemplate,
-			@Value("${tibco.queueName}") String queue) {
+			JmsMessagingTemplate messagingTemplate) {
 		this.connectionFactory=factory;
 		this.jmsMessagingTemplate=messagingTemplate;
-		this.queueName=queue;
 	}
 
 	/**
@@ -57,16 +58,16 @@ public class TibcoQueueServiceImpl implements TibcoService{
 	@PostConstruct
 	public void init() {
 
-
 		try {
 
-			// Initialize messageProducer with Queue as destination 
+			logger.info("Queue Init");
+			// #1 Initialize messageProducer with Queue as destination 
 			connection  = connectionFactory.createConnection();	
 			session     = connection.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
-			Queue queue = session.createQueue(queueName);
+			Queue queue = session.createQueue(TibcoConstants.INCOMING_QUEUE);
 			messageProducer = session.createProducer(queue);
 
-			// Initialize messagingTemplate with Queue as destination 
+			// #2 Initialize messagingTemplate with Queue as destination 
 			jmsMessagingTemplate.setDefaultDestination(queue);
 
 			connection.start();
@@ -77,13 +78,13 @@ public class TibcoQueueServiceImpl implements TibcoService{
 
 
 	@Override
-	public void sendMessage(String msgData) {
+	public void sendMessage(Student student) {
 		try {
-			logger.info("sendUsingQueue");
 
-			Message message= session.createTextMessage(msgData);
+			// Send Text Message
+			Message message= session.createTextMessage(student.toString());
 			messageProducer.send(message);
-
+			
 		} catch (JMSException e) {
 			logger.error("Exception occurred {}", e);
 		}
@@ -91,8 +92,9 @@ public class TibcoQueueServiceImpl implements TibcoService{
 	}
 
 	@Override
-	public void sendViaMsgTemplate(String payload) {
-		// TODO Auto-generated method stub
+	public void sendViaMsgTemplate(Student student) {
+		
+		jmsMessagingTemplate.convertAndSend(student.toString());
 
 	}
 
